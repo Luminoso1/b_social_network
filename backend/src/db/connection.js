@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { MONGO_URL } from '../../config.js'
+import { MONGO_URL } from '../config.js'
 
 async function connect () {
   try {
@@ -11,4 +11,4 @@ async function connect () {
   }
 }
 
-export default connect;
+export default connect
