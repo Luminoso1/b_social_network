@@ -11,7 +11,7 @@ app.use(express.json())
 app.use(cookieParser())
 
 app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your React app's URL
+  origin: 'http://localhost:5173', // Replace with your client app's URL
   credentials: true
 }))
 

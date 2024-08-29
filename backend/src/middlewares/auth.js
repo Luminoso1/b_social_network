@@ -1,11 +1,10 @@
-import { jwtVerify } from 'jose'
-import { SECRET_KEY } from '../config.js'
+import { validateToken } from '../utils/index.js'
 
 export const validateAuthCookie = async (req, res, next) => {
   // get token  👉 ensure you have cookie-parser
   const token = req.cookies.session
 
-  console.log(token) // get undefined
+  // console.log(req.cookies)
 
   if (!token) {
     return res.status(403).send({ status: 'error', message: 'not authorized' })
@@ -15,7 +14,7 @@ export const validateAuthCookie = async (req, res, next) => {
 
   try {
     // ensure token is not expired !💀 only get payload
-    const decodedToken = await jwtVerify(token, new TextEncoder().encode(SECRET_KEY))
+    const decodedToken = await validateToken(token)
     req.session.user = decodedToken.payload
   } catch (error) {
     console.log('ERROR: validate auth cookie ', error.message)
