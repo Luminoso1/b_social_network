@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { register, login, profile, userListWithoutDep, updateUser, logout, uploadImage } from '../controllers/user.js'
+import { register, login, profile, userListWithoutDep, updateUser, logout, uploadImage, avatar } from '../controllers/user.js'
 import { validate } from '../middlewares/validate-schema.js'
 import { userSchema, loginSchema, userUpdateSchema } from '../models/zod/user.js'
 import { fileSchema } from '../models/zod/file.js'
@@ -21,5 +21,7 @@ router.get('/users', validateAuthCookie, userListWithoutDep)
 router.put('/user/update', validateAuthCookie, validate({ body: userUpdateSchema }), updateUser)
 
 router.post('/user/upload', validateAuthCookie, upload.single('file'), validate({ file: fileSchema }), uploadImage)
+
+router.get('/user/:file', validateAuthCookie, avatar)
 
 export default router

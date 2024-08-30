@@ -1,5 +1,8 @@
+import fs from 'fs'
+import path from 'path'
 import User from '../models/user.js'
 import { comparePassword, encryptPassword, generateToken } from '../utils/index.js'
+import { followThisUser } from '../services/follow.js'
 
 export const register = async (req, res) => {
   try {
@@ -13,14 +16,7 @@ export const register = async (req, res) => {
     })
 
     if (user) {
-      return res.status(400).send({ message: 'user already exists' })
-    }
-
-    if (password.length === 0) {
-      return res.status(400).send({
-        status: 'error',
-        message: 'password is required'
-      })
+      return res.status(400).send({ status: 'error', message: 'user already exists' })
     }
     // hash password with bcrypt
     const encryptedPassword = await encryptPassword(password)
@@ -125,8 +121,8 @@ export const logout = async (req, res) => {
 
 export const profile = async (req, res) => {
   // get id parram
-  console.log(req.session)
   const { id } = req.params
+  const { user } = req.session
   try {
     // find the user
     const profile = await User.findById(id).select('-password -role -email -__v')
@@ -135,6 +131,15 @@ export const profile = async (req, res) => {
       return res.status(404).send({
         status: 'error',
         message: 'user not found'
+      })
+    }
+
+    if (user.id !== id) {
+      const followInfo = await followThisUser(id, user.id)
+      return res.status(200).json({
+        status: 'succes',
+        profile,
+        followInfo
       })
     }
 
@@ -285,5 +290,27 @@ export const uploadImage = async (req, res) => {
       status: 'error',
       message: 'Error al subir archivos'
     })
+  }
+}
+
+export const avatar = (req, res) => {
+  try {
+    const file = req.params.file
+    const filePath = './uploads/' + file
+
+    fs.stat(filePath, (error, exists) => {
+      if (error) {
+        return res.status(404).sebd({
+          status: 'error',
+          message: 'error',
+          error
+        })
+      }
+    })
+
+    return res.sendFile(path.resolve(filePath))
+  } catch (error) {
+    console.log('Error: ', error)
+    res.status(500).json({ status: 'error', message: 'Error' })
   }
 }
