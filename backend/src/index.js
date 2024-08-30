@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser'
 import connect from './db/connection.js'
 import { PORT } from './config.js'
 import userRoute from './routes/user.routes.js'
+import followRoute from './routes/follow.routes.js'
 
 const app = express()
 
@@ -22,3 +23,4 @@ app.listen(PORT, () => {
 })
 
 app.use('/', userRoute)
+app.use('/', followRoute)
