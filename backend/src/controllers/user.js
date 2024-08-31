@@ -16,7 +16,7 @@ export const register = async (req, res) => {
     })
 
     if (user) {
-      return res.status(400).send({ status: 'error', message: 'user already exists' })
+      return res.status(400).json({ status: 'error', message: 'user already exists' })
     }
     // hash password with bcrypt
     const encryptedPassword = await encryptPassword(password)
@@ -39,7 +39,7 @@ export const register = async (req, res) => {
     })
   } catch (error) {
     console.log('User Register Error: ', error)
-    return res.status(500).send({
+    return res.status(500).json({
       status: 'Error',
       message: 'Error registro usuario'
     })
@@ -56,14 +56,14 @@ export const login = async (req, res) => {
     })
 
     if (!user) {
-      return res.status(400).send({ status: 'error', message: 'User not found' })
+      return res.status(400).json({ status: 'error', message: 'User not found' })
     }
 
     // validate if password is correct
     const isValidPassword = await comparePassword(password, user.password)
 
     if (!isValidPassword) {
-      return res.status(401).send({ status: 'error', message: 'password invalid' })
+      return res.status(401).json({ status: 'error', message: 'password invalid' })
     }
 
     // generate token with jose
@@ -100,7 +100,7 @@ export const login = async (req, res) => {
     })
   } catch (error) {
     console.log('User Login Error: ', error)
-    return res.status(500).send({
+    return res.status(500).json({
       status: 'Error',
       message: 'Error login usuario'
     })
@@ -128,7 +128,7 @@ export const profile = async (req, res) => {
     const profile = await User.findById(id).select('-password -role -email -__v')
 
     if (!profile) {
-      return res.status(404).send({
+      return res.status(404).json({
         status: 'error',
         message: 'user not found'
       })
@@ -149,7 +149,7 @@ export const profile = async (req, res) => {
     })
   } catch (error) {
     console.log('Error getting profile:', error)
-    return res.status(500).send({
+    return res.status(500).json({
       status: 'error',
       message: 'Error getting profile'
     })
@@ -273,7 +273,7 @@ export const uploadImage = async (req, res) => {
     ).select('-password -role -created_at -__v')
 
     if (!userImageUpdate) {
-      return res.status(500).send({
+      return res.status(500).json({
         status: 'error',
         message: 'Eror updating image'
       })
@@ -285,10 +285,11 @@ export const uploadImage = async (req, res) => {
       file
     })
   } catch (error) {
-    console.log('Error al subir archivos', error)
-    return res.status(500).send({
+    console.log('Error file uploading', error.message)
+    return res.status(500).json({
       status: 'error',
-      message: 'Error al subir archivos'
+      message: 'Error file uploading',
+      error: error.message
     })
   }
 }
@@ -300,17 +301,17 @@ export const avatar = (req, res) => {
 
     fs.stat(filePath, (error, exists) => {
       if (error) {
-        return res.status(404).sebd({
+        return res.status(404).json({
           status: 'error',
-          message: 'error',
+          message: 'Error avatar',
           error
         })
       }
     })
 
-    return res.sendFile(path.resolve(filePath))
+    return res.jsonFile(path.resolve(filePath))
   } catch (error) {
     console.log('Error: ', error)
-    res.status(500).json({ status: 'error', message: 'Error' })
+    res.status(500).json({ status: 'error', message: 'Error avatar' })
   }
 }
