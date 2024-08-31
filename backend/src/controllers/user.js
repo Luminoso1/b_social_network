@@ -297,7 +297,7 @@ export const uploadImage = async (req, res) => {
 export const avatar = (req, res) => {
   try {
     const file = req.params.file
-    const filePath = './uploads/' + file
+    const filePath = './uploads/avatars/' + file
 
     fs.stat(filePath, (error, exists) => {
       if (error) {
@@ -309,7 +309,7 @@ export const avatar = (req, res) => {
       }
     })
 
-    return res.jsonFile(path.resolve(filePath))
+    return res.sendFile(path.resolve(filePath))
   } catch (error) {
     console.log('Error: ', error)
     res.status(500).json({ status: 'error', message: 'Error avatar' })
