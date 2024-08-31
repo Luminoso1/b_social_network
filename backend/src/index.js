@@ -5,6 +5,7 @@ import connect from './db/connection.js'
 import { PORT } from './config.js'
 import userRoute from './routes/user.routes.js'
 import followRoute from './routes/follow.routes.js'
+import postRoute from './routes/post.routes.js'
 
 const app = express()
 
@@ -24,3 +25,4 @@ app.listen(PORT, () => {
 
 app.use('/', userRoute)
 app.use('/', followRoute)
+app.use('/', postRoute)
