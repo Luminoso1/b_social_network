@@ -4,9 +4,11 @@ import { validate } from '../middlewares/validate-schema.js'
 import { userSchema, loginSchema, userUpdateSchema } from '../models/zod/user.js'
 import { fileSchema } from '../models/zod/file.js'
 import { validateAuthCookie } from '../middlewares/auth.js'
-import { upload } from '../utils/multer-upload.js'
+import { defineStorage } from '../utils/multer-upload.js'
 
 const router = Router()
+
+const upload = defineStorage('avatars')
 
 router.post('/register', validate({ body: userSchema }), register)
 
