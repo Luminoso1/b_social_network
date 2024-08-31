@@ -7,7 +7,7 @@ export const validateAuthCookie = async (req, res, next) => {
   // console.log(req.cookies)
 
   if (!token) {
-    return res.status(403).send({ status: 'error', message: 'not authorized' })
+    return res.status(401).send({ status: 'error', message: 'not authorized' })
   }
 
   req.session = { user: null }
