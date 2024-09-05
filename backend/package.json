@@ -5,8 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node --watch ./src/index.js ",
+    "dev": "nodemon ./index.js",
     "lint": "eslint --fix --ext .js,.ts ."
   },
   "keywords": [],
@@ -24,6 +23,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "nodemon": "^3.1.4",
     "standard": "^17.1.0"
   },
   "eslintConfig": {
