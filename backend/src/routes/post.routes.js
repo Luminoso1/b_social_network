@@ -6,6 +6,7 @@ import { fileOptionalSchema } from '../models/zod/file.js'
 import {
   deletePost,
   getPost,
+  getAllPost,
   save,
   showMedia,
   userPosts
@@ -24,7 +25,9 @@ router.post(
   save
 )
 
-router.get('/post/:id', validateAuthCookie, getPost)
+router.get('/posts', validateAuthCookie, getAllPost)
+
+router.get('/posts/:id', validateAuthCookie, getPost)
 
 router.delete('/post/:id', validateAuthCookie, deletePost)
 

@@ -34,6 +34,46 @@ export const save = async (req, res) => {
   }
 }
 
+export const getAllPost = async (req, res) => {
+  try {
+    let { page, limit } = req.query
+    page = page <= 0 || !page ? 1 : parseInt(page)
+    limit = limit <= 0 || !limit ? 5 : parseInt(limit)
+
+    const posts = await Post.find()
+      .populate('user_id', '_id name last_name image')
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec()
+
+    const count = await Post.countDocuments()
+
+    const docs = posts.length
+
+    if (docs === 0) {
+      return res.status(200).json({
+        state: 'succes',
+        message: 'No posts',
+        totalPages: Math.ceil(count / limit),
+        currentPage: page
+      })
+    }
+    return res.status(200).json({
+      status: 'success',
+      posts,
+      totalPages: Math.ceil(count / limit),
+      totalDocs: count,
+      docs,
+      currentPage: page
+    })
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Error getting the post'
+    })
+  }
+}
+
 export const getPost = async (req, res) => {
   try {
     const postId = req.params.id
