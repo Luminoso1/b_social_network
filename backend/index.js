@@ -6,6 +6,7 @@ import { PORT } from './src/config.js'
 import userRoute from './src/routes/user.routes.js'
 import followRoute from './src/routes/follow.routes.js'
 import postRoute from './src/routes/post.routes.js'
+import authRoute from './src/routes/auth.routes.js'
 
 const app = express()
 
@@ -28,3 +29,4 @@ app.listen(PORT, () => {
 app.use('/', userRoute)
 app.use('/', followRoute)
 app.use('/', postRoute)
+app.use('/', authRoute)

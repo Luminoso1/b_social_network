@@ -1,131 +1,16 @@
 import fs from 'fs'
 import path from 'path'
 import User from '../models/user.js'
-import { comparePassword, encryptPassword, generateToken } from '../utils/index.js'
-import { followThisUser } from '../services/follow.js'
-
-export const register = async (req, res) => {
-  try {
-    const { name, lastName, nick, email, password } = req.body
-    // validate if user exists ?
-    const user = await User.findOne({
-      $or: [
-        { email },
-        { nick }
-      ]
-    })
-
-    if (user) {
-      return res.status(400).json({ status: 'error', message: 'user already exists' })
-    }
-    // hash password with bcrypt
-    const encryptedPassword = await encryptPassword(password)
-    // response
-
-    const userSave = new User({
-      name,
-      last_name: lastName,
-      nick,
-      email,
-      password: encryptedPassword
-    })
-
-    await userSave.save()
-
-    return res.status(200).json({
-      status: 'success',
-      message: 'Registro de usuario exitoso',
-      userSave
-    })
-  } catch (error) {
-    console.log('User Register Error: ', error)
-    return res.status(500).json({
-      status: 'Error',
-      message: 'Error registro usuario'
-    })
-  }
-}
-
-export const login = async (req, res) => {
-  try {
-    const { username, password } = req.body
-
-    // validate  if user exists
-    const user = await User.findOne({
-      $or: [{ email: username }, { nick: username }]
-    })
-
-    if (!user) {
-      return res.status(400).json({ status: 'error', message: 'User not found' })
-    }
-
-    // validate if password is correct
-    const isValidPassword = await comparePassword(password, user.password)
-
-    if (!isValidPassword) {
-      return res.status(401).json({ status: 'error', message: 'password invalid' })
-    }
-
-    // generate token with jose
-
-    const payload = {
-      id: user._id,
-      name: user.name,
-      nick: user.nick,
-      role: user.role
-    }
-
-    const token = await generateToken(payload)
-
-    // set session cookie
-    res.cookie('session', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
-    })
-
-    return res.status(200).json({
-      status: 'succes',
-      message: 'login succesfully',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        last_name: user.last_name,
-        email: user.email,
-        nick: user.nick,
-        image: user.image,
-        created_at: user.created_at
-      }
-    })
-  } catch (error) {
-    console.log('User Login Error: ', error)
-    return res.status(500).json({
-      status: 'Error',
-      message: 'Error login usuario'
-    })
-  }
-}
-
-export const logout = async (req, res) => {
-  try {
-    res.clearCookie('session').json({
-      status: 'success',
-      message: 'logout succesfull'
-    })
-  } catch (error) {
-    console.log('Error cleaning session')
-    res.status(500).json({ status: 'error', message: 'Error cleaning session' })
-  }
-}
+import { encryptPassword } from '../utils/index.js'
+import { followThisUser, getFollowCount } from '../services/follow.js'
 
 export const profile = async (req, res) => {
   // get id parram
-  const { id } = req.params
   const { user } = req.session
+  console.log(user)
   try {
     // find the user
-    const profile = await User.findById(id).select('-password -role -email -__v')
+    const profile = await User.findById(user.id).select('-password  -__v')
 
     if (!profile) {
       return res.status(404).json({
@@ -133,25 +18,54 @@ export const profile = async (req, res) => {
         message: 'user not found'
       })
     }
-
-    if (user.id !== id) {
-      const followInfo = await followThisUser(id, user.id)
-      return res.status(200).json({
-        status: 'succes',
-        profile,
-        followInfo
-      })
-    }
+    const count = await getFollowCount(user.id)
 
     return res.status(200).json({
       status: 'succes',
-      profile
+      profile,
+      count
     })
   } catch (error) {
     console.log('Error getting profile:', error)
+
     return res.status(500).json({
       status: 'error',
       message: 'Error getting profile'
+    })
+  }
+}
+
+export const getUser = async (req, res) => {
+  try {
+    const { id } = req.params
+    const { user } = req.session
+
+    const userDb = await User.findById(id).select(
+      'name last_name nick image bio'
+    )
+
+    if (!userDb) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
+    if (user.id !== id) {
+      const followInfo = await followThisUser(id, user.id)
+      const count = await getFollowCount(id)
+
+      return res.status(200).json({
+        status: 'succes',
+        profile: userDb,
+        followInfo,
+        count
+      })
+    }
+
+    return res.status(200).json({ status: 'succes', user: userDb })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      status: 'error',
+      message: 'Error getting user'
     })
   }
 }
@@ -213,14 +127,18 @@ export const updateUser = async (req, res) => {
 
     // make sure data is not emptyx
     if (Object.keys(data).length === 0) {
-      return res.status(400).json({ status: 'error', message: 'No data provided for update' })
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'No data provided for update' })
     }
 
     // get the user by the id in the session cookie
     const dbUser = await User.findById(user.id)
 
     if (!dbUser) {
-      return res.status(404).json({ status: 'error', message: 'User not found' })
+      return res
+        .status(404)
+        .json({ status: 'error', message: 'User not found' })
     }
 
     if (data.password) {
