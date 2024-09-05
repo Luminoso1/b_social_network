@@ -1,7 +1,11 @@
 import fs from 'fs'
 import path from 'path'
 import User from '../models/user.js'
-import { comparePassword, encryptPassword, generateToken } from '../utils/index.js'
+import {
+  comparePassword,
+  encryptPassword,
+  generateToken
+} from '../utils/index.js'
 import { followThisUser } from '../services/follow.js'
 
 export const register = async (req, res) => {
@@ -9,14 +13,13 @@ export const register = async (req, res) => {
     const { name, lastName, nick, email, password } = req.body
     // validate if user exists ?
     const user = await User.findOne({
-      $or: [
-        { email },
-        { nick }
-      ]
+      $or: [{ email }, { nick }]
     })
 
     if (user) {
-      return res.status(400).json({ status: 'error', message: 'user already exists' })
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'user already exists' })
     }
     // hash password with bcrypt
     const encryptedPassword = await encryptPassword(password)
@@ -56,14 +59,18 @@ export const login = async (req, res) => {
     })
 
     if (!user) {
-      return res.status(400).json({ status: 'error', message: 'User not found' })
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'User not found' })
     }
 
     // validate if password is correct
     const isValidPassword = await comparePassword(password, user.password)
 
     if (!isValidPassword) {
-      return res.status(401).json({ status: 'error', message: 'password invalid' })
+      return res
+        .status(401)
+        .json({ status: 'error', message: 'password invalid' })
     }
 
     // generate token with jose
@@ -109,7 +116,12 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    res.clearCookie('session').json({
+    res.cookie('session', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    })
+    res.status(200).json({
       status: 'success',
       message: 'logout succesfull'
     })
@@ -120,12 +132,40 @@ export const logout = async (req, res) => {
 }
 
 export const profile = async (req, res) => {
+  const { user } = req.session
+
+  try {
+    const userInfo = await User.findById(user.id).select(
+      'name last_name email nick bio image'
+    )
+    if (!userInfo) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Oops, user does not exists'
+      })
+    }
+
+    return res.status(200).json({
+      status: 'succes',
+      user: userInfo
+    })
+  } catch (error) {
+    return res.status(500).json({
+      status: 'error',
+      message: 'Error getting the user info'
+    })
+  }
+}
+
+export const getUser = async (req, res) => {
   // get id parram
   const { id } = req.params
   const { user } = req.session
   try {
     // find the user
-    const profile = await User.findById(id).select('-password -role -email -__v')
+    const profile = await User.findById(id).select(
+      '-password -role -email -__v'
+    )
 
     if (!profile) {
       return res.status(404).json({
@@ -213,14 +253,18 @@ export const updateUser = async (req, res) => {
 
     // make sure data is not emptyx
     if (Object.keys(data).length === 0) {
-      return res.status(400).json({ status: 'error', message: 'No data provided for update' })
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'No data provided for update' })
     }
 
     // get the user by the id in the session cookie
     const dbUser = await User.findById(user.id)
 
     if (!dbUser) {
-      return res.status(404).json({ status: 'error', message: 'User not found' })
+      return res
+        .status(404)
+        .json({ status: 'error', message: 'User not found' })
     }
 
     if (data.password) {
@@ -253,11 +297,6 @@ export const updateUser = async (req, res) => {
     })
   }
 }
-
-/*
-  TODO:
-    - remove file if it does not met the validations
-*/
 
 export const uploadImage = async (req, res) => {
   try {
