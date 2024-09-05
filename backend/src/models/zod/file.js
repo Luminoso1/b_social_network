@@ -10,3 +10,5 @@ export const fileSchema = z.object({
 }).passthrough()
 
 // passthrough() to allow extra properties without validation
+
+export const fileOptionalSchema = fileSchema.optional()
