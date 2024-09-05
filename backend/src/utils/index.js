@@ -25,3 +25,8 @@ export const encryptPassword = async (password) => {
 export const comparePassword = async (password, userPassword) => {
   return await bcrypt.compareSync(password, userPassword)
 }
+
+export const getFullPathImage = (req, relative) => {
+  const path = `${req.protocol}://${req.get('host')}/${relative}`
+  return path
+}

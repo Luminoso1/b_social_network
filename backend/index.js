@@ -8,6 +8,9 @@ import followRoute from './src/routes/follow.routes.js'
 import postRoute from './src/routes/post.routes.js'
 import authRoute from './src/routes/auth.routes.js'
 
+import path, { dirname } from 'path'
+import { fileURLToPath } from 'url'
+
 const app = express()
 
 app.use(express.json())
@@ -30,3 +33,18 @@ app.use('/', userRoute)
 app.use('/', followRoute)
 app.use('/', postRoute)
 app.use('/', authRoute)
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+console.log({ __filename, __dirname })
+
+app.use(
+  '/uploads/avatars',
+  express.static(path.join(__dirname, 'uploads', 'avatars'))
+)
+
+app.use(
+  '/uploads/posts',
+  express.static(path.join(__dirname, 'uploads', 'posts'))
+)
