@@ -31,7 +31,7 @@ const UserSchema = mongoose.Schema({
   },
   image: {
     type: String,
-    default: 'default.png'
+    default: 'uploads/avatars/default.webp'
   },
   created_at: {
     type: Date,

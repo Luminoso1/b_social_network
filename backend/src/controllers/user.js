@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import User from '../models/user.js'
-import { encryptPassword } from '../utils/index.js'
+import { encryptPassword, getFullPathImage } from '../utils/index.js'
 import { followThisUser, getFollowCount } from '../services/follow.js'
 
 export const profile = async (req, res) => {
@@ -18,6 +18,11 @@ export const profile = async (req, res) => {
       })
     }
     const count = await getFollowCount(user.id)
+
+    // get full path of image
+    const fullImageUrl = getFullPathImage(req, profile.image)
+
+    profile.image = fullImageUrl
 
     return res.status(200).json({
       status: 'succes',
@@ -39,13 +44,16 @@ export const getUser = async (req, res) => {
     const { id } = req.params
     const { user } = req.session
 
-    const userDb = await User.findById(id).select(
-      'name last_name nick image bio'
+    const profile = await User.findById(id).select(
+      'name last_name nick image bio created_at'
     )
 
-    if (!userDb) {
+    if (!profile) {
       return res.status(400).json({ message: 'User not found' })
     }
+
+    const fullImageUrl = getFullPathImage(req, profile.image)
+    profile.image = fullImageUrl
 
     if (user.id !== id) {
       const followInfo = await followThisUser(id, user.id)
@@ -53,13 +61,16 @@ export const getUser = async (req, res) => {
 
       return res.status(200).json({
         status: 'succes',
-        profile: userDb,
+        profile,
         followInfo,
         count
       })
     }
 
-    return res.status(200).json({ status: 'succes', user: userDb })
+    return res.status(200).json({
+      status: 'succes',
+      profile
+    })
   } catch (error) {
     console.log(error)
     return res.status(500).json({
@@ -69,6 +80,10 @@ export const getUser = async (req, res) => {
   }
 }
 
+/*
+   TODO:
+      - Implement user list endpoint with mongoose-paginate-v2
+*/
 export const userListWithoutDep = async (req, res) => {
   try {
     // get and validate queries
@@ -77,7 +92,7 @@ export const userListWithoutDep = async (req, res) => {
     limit = limit <= 0 || !limit ? 5 : parseInt(limit)
 
     // find users with limit and skip
-    const users = await User.find()
+    const usersDb = await User.find()
       .select('-password -role -email -__v')
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -86,7 +101,7 @@ export const userListWithoutDep = async (req, res) => {
     // get total documents in user collection
     const count = await User.countDocuments()
 
-    const docs = users.length
+    const docs = usersDb.length
 
     if (docs === 0) {
       return res.status(200).json({
@@ -96,6 +111,12 @@ export const userListWithoutDep = async (req, res) => {
         currentPage: page
       })
     }
+
+    const users = usersDb.map((user) => {
+      const userImage = getFullPathImage(req, user.image)
+      user.image = userImage
+      return user
+    })
 
     return res.status(200).json({
       state: 'succes',
@@ -113,11 +134,6 @@ export const userListWithoutDep = async (req, res) => {
     })
   }
 }
-
-/*
-   TODO:
-      - Implement user list endpoint with mongoose-paginate-v2
-*/
 
 export const updateUser = async (req, res) => {
   try {
@@ -169,11 +185,6 @@ export const updateUser = async (req, res) => {
   }
 }
 
-/*
-  TODO:
-    - remove file if it does not met the validations
-*/
-
 export const uploadImage = async (req, res) => {
   try {
     // get file and user
@@ -181,9 +192,10 @@ export const uploadImage = async (req, res) => {
     const { user } = req.session
 
     // get user and update image
+    const avatar = `uploads/avatars/${req.file.filename}`
     const userImageUpdate = await User.findOneAndUpdate(
       { _id: user.id },
-      { image: req.file.filename },
+      { image: avatar },
       { new: true }
     ).select('-password -role -created_at -__v')
 

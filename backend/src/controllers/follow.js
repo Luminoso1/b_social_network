@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 import User from '../models/user.js'
 import Follow from '../models/follow.js'
+import { getFullPathImage } from '../utils/index.js'
 
 export const follow = async (req, res) => {
   const { user_follow_id } = req.body
@@ -10,14 +11,20 @@ export const follow = async (req, res) => {
 
   try {
     if (!userToFollow) {
-      return res.status(400).json({ status: 'error', message: 'Error, not content found' })
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'Error, not content found' })
     }
 
     if (user.id === userToFollow) {
-      return res.status(400).json({ status: 'error', message: 'Error, cannot follow yourself' })
+      return res
+        .status(400)
+        .json({ status: 'error', message: 'Error, cannot follow yourself' })
     }
 
-    const followedUser = await User.findById(userToFollow).select('name last_name')
+    const followedUser = await User.findById(userToFollow).select(
+      'name last_name'
+    )
 
     if (!followedUser) {
       return res.status(404).send({
@@ -51,7 +58,9 @@ export const follow = async (req, res) => {
       followedUser
     })
   } catch (error) {
-    return res.status(500).json({ status: 'error', message: 'Error, follow user endpoint ' })
+    return res
+      .status(500)
+      .json({ status: 'error', message: 'Error, follow user endpoint ' })
   }
 }
 
@@ -60,7 +69,9 @@ export const unfollow = async (req, res) => {
   const { user } = req.session
 
   if (!followUserId || user.id === followUserId) {
-    return res.status(400).json({ status: 'error', message: 'no params provided' })
+    return res
+      .status(400)
+      .json({ status: 'error', message: 'no params provided' })
   }
 
   try {
@@ -100,12 +111,16 @@ export const following = async (req, res) => {
 
     const { user } = req.session
 
-    const following = await Follow.find({ following_user: user.id })
-      .populate({
-        path: 'followed_user',
-        select: '_id name last_name image'
-      })
-    const followingList = following.map((follower) => follower.followed_user)
+    const following = await Follow.find({ following_user: user.id }).populate({
+      path: 'followed_user',
+      select: '_id name last_name image'
+    })
+    const followingList = following.map((following) => {
+      const followerImg = following.followed_user.image
+      const pathImage = getFullPathImage(req, followerImg)
+      following.followed_user.image = pathImage
+      return following.followed_user
+    })
 
     return res.status(200).json({
       state: 'succes',
@@ -132,12 +147,16 @@ export const followers = async (req, res) => {
 
     const { user } = req.session
 
-    const followers = await Follow.find({ followed_user: user.id })
-      .populate({
-        path: 'following_user',
-        select: '_id name last_name image'
-      })
-    const followerList = followers.map((follower) => follower.following_user)
+    const followers = await Follow.find({ followed_user: user.id }).populate({
+      path: 'following_user',
+      select: '_id name last_name image'
+    })
+    const followerList = followers.map((follower) => {
+      const followerImg = follower.following_user.image
+      const pathImage = getFullPathImage(req, followerImg)
+      follower.following_user.image = pathImage
+      return follower.following_user
+    })
 
     return res.status(200).json({
       state: 'succes',
