@@ -59,8 +59,6 @@ export const unfollow = async (req, res) => {
   const followUserId = req.params.user_id
   const { user } = req.session
 
-  console.log(followUserId)
-
   if (!followUserId || user.id === followUserId) {
     return res.status(400).json({ status: 'error', message: 'no params provided' })
   }
@@ -101,7 +99,6 @@ export const following = async (req, res) => {
     // limit = limit <= 0 || !limit ? 5 : parseInt(limit)
 
     const { user } = req.session
-    console.log(user)
 
     const following = await Follow.find({ following_user: user.id })
       .populate({
@@ -134,7 +131,6 @@ export const followers = async (req, res) => {
     // limit = limit <= 0 || !limit ? 5 : parseInt(limit)
 
     const { user } = req.session
-    console.log(user)
 
     const followers = await Follow.find({ followed_user: user.id })
       .populate({

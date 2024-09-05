@@ -5,7 +5,6 @@ export const validate = (schemas) => async (req, res, next) => {
   try {
     for (const [key, schema] of Object.entries(schemas)) {
       req[key] = schema.parse(req[key])
-      console.log(req[key])
     }
     next()
   } catch (error) {

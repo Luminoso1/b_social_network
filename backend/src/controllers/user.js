@@ -7,7 +7,6 @@ import { followThisUser, getFollowCount } from '../services/follow.js'
 export const profile = async (req, res) => {
   // get id parram
   const { user } = req.session
-  console.log(user)
   try {
     // find the user
     const profile = await User.findById(user.id).select('-password  -__v')
@@ -145,8 +144,6 @@ export const updateUser = async (req, res) => {
       const encryptedPassword = await encryptPassword(data.password)
       data.password = encryptedPassword
     }
-
-    console.log('data to update', data)
 
     // update the data
 
