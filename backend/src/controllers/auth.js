@@ -1,5 +1,9 @@
 import User from '../models/user.js'
-import { comparePassword, encryptPassword, generateToken } from '../utils/index.js'
+import {
+  comparePassword,
+  encryptPassword,
+  generateToken
+} from '../utils/index.js'
 
 export const register = async (req, res) => {
   try {
@@ -31,7 +35,12 @@ export const register = async (req, res) => {
     return res.status(200).json({
       status: 'success',
       message: 'Registro de usuario exitoso',
-      userSave
+      user: {
+        name: userSave.name,
+        lastName: userSave.last_name,
+        nick: userSave.nick,
+        email: userSave.email
+      }
     })
   } catch (error) {
     console.log('User Register Error: ', error)
