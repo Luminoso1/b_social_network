@@ -37,8 +37,6 @@ app.use('/', authRoute)
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-console.log({ __filename, __dirname })
-
 app.use(
   '/uploads/avatars',
   express.static(path.join(__dirname, 'uploads', 'avatars'))

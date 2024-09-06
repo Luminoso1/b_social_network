@@ -2,7 +2,8 @@ import User from '../models/user.js'
 import {
   comparePassword,
   encryptPassword,
-  generateToken
+  generateToken,
+  getFullPathImage
 } from '../utils/index.js'
 
 export const register = async (req, res) => {
@@ -75,6 +76,8 @@ export const login = async (req, res) => {
         .json({ status: 'error', message: 'password invalid' })
     }
 
+    const fullAvatarPath = getFullPathImage(req, user.image)
+
     // generate token with jose
 
     const payload = {
@@ -95,15 +98,13 @@ export const login = async (req, res) => {
 
     return res.status(200).json({
       status: 'succes',
-      message: 'login succesfully',
-      token,
       user: {
         id: user._id,
         name: user.name,
         last_name: user.last_name,
         email: user.email,
         nick: user.nick,
-        image: user.image,
+        image: fullAvatarPath,
         created_at: user.created_at
       }
     })
