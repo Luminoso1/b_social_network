@@ -16,10 +16,19 @@ export const validateAuthCookie = async (req, res, next) => {
     // ensure token is not expired !💀 only get payload
     const decodedToken = await validateToken(token)
     req.session.user = decodedToken.payload
+    next()
   } catch (error) {
     console.log('ERROR: validate auth cookie ', error.message)
-    return res.status(403).send({ status: 'error', message: 'not authorized' })
-  }
 
-  next()
+    res.clearCookie('session', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'strict'
+    })
+
+    // 401 user is not authenticated
+    // 403 user is authenticated, but does not have permisions
+
+    return res.status(401).json({ status: 'error', message: 'not authorized' })
+  }
 }

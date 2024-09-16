@@ -80,6 +80,37 @@ export const getUser = async (req, res) => {
   }
 }
 
+export const getUserByNick = async (req, res) => {
+  try {
+    const { nick } = req.params
+
+    const profile = await User.findOne({ nick })
+      .select('name last_name nick image bio created_at')
+      .exec()
+
+    if (!profile) {
+      return res.status(400).json({ message: 'User not found' })
+    }
+
+    const fullImageUrl = getFullPathImage(req, profile.image)
+    profile.image = fullImageUrl
+
+    const count = await getFollowCount(profile._id)
+
+    return res.status(200).json({
+      status: 'succes',
+      profile,
+      count
+    })
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({
+      status: 'error',
+      message: 'Error getting user'
+    })
+  }
+}
+
 /*
    TODO:
       - Implement user list endpoint with mongoose-paginate-v2
