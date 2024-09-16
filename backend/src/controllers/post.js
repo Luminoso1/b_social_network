@@ -1,6 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import Post from '../models/post.js'
+import User from '../models/user.js'
+import { getFullPathImage } from '../utils/index.js'
 
 export const save = async (req, res) => {
   try {
@@ -22,9 +24,22 @@ export const save = async (req, res) => {
       })
     }
 
+    const userPost = await User.findById(user.id).select(
+      '_id name last_name image'
+    )
+    const { user_id, ...rest } = postSaved._doc
+    const newPost = {
+      ...rest,
+      user: userPost
+    }
+
+    newPost.file = getFullPathImage(req, newPost.file)
+    newPost.user.image = getFullPathImage(req, newPost.user.image)
+
     return res.status(201).json({
       status: 'succes',
-      message: 'Publicacion successfully created'
+      message: 'Publicacion successfully created',
+      post: newPost
     })
   } catch (error) {
     return res.status(500).json({
@@ -41,7 +56,8 @@ export const getAllPost = async (req, res) => {
     limit = limit <= 0 || !limit ? 5 : parseInt(limit)
 
     const postsDb = await Post.find()
-      .populate('user_id', '_id name last_name image')
+      .populate('user_id', '_id name last_name image nick')
+      .sort({ created_at: -1 }) // sort by most recent
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec()
@@ -60,14 +76,21 @@ export const getAllPost = async (req, res) => {
     }
 
     const posts = postsDb.map((post) => {
-      const fullImageUrl = `${req.protocol}://${req.get(
-        'host'
-      )}/uploads/posts/${post.file}`
-      if (post.file) {
-        post.file = fullImageUrl
+      const { user_id: userId, ...rest } = post._doc
+      const newPost = {
+        ...rest,
+        user: userId
       }
-      return post
+      if (newPost.file) {
+        newPost.file = getFullPathImage(req, newPost.file)
+      }
+      if (!newPost.user.image.startsWith('http')) {
+        newPost.user.image = getFullPathImage(req, newPost.user.image)
+      }
+
+      return newPost
     })
+
     return res.status(200).json({
       status: 'success',
       posts,
@@ -154,6 +177,67 @@ export const userPosts = async (req, res) => {
     return res.status(200).send({
       status: 'success',
       posts
+    })
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Error getting the post'
+    })
+  }
+}
+
+export const userPostsByNick = async (req, res) => {
+  try {
+    const { nick } = req.params
+    let { page, limit } = req.query
+    page = page <= 0 || !page ? 1 : parseInt(page)
+    limit = limit <= 0 || !limit ? 5 : parseInt(limit)
+
+    const user = await User.findOne({ nick }).select('_id name').exec()
+
+    const postsDb = await Post.find({ user_id: user.id })
+      .populate('user_id', '_id name last_name image nick')
+      .sort({ created_at: -1 }) // sort by most recent
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec()
+
+    const count = await Post.countDocuments({ user_id: user.id })
+
+    const docs = postsDb.length
+
+    if (docs === 0) {
+      return res.status(200).json({
+        state: 'succes',
+        message: 'No posts',
+        totalPages: Math.ceil(count / limit),
+        currentPage: page
+      })
+    }
+
+    const posts = postsDb.map((post) => {
+      const { user_id: userId, ...rest } = post._doc
+      const newPost = {
+        ...rest,
+        user: userId
+      }
+      if (newPost.file) {
+        newPost.file = getFullPathImage(req, newPost.file)
+      }
+      if (!newPost.user.image.startsWith('http')) {
+        newPost.user.image = getFullPathImage(req, newPost.user.image)
+      }
+
+      return newPost
+    })
+
+    return res.status(200).json({
+      status: 'success',
+      posts,
+      totalPages: Math.ceil(count / limit),
+      totalDocs: count,
+      docs,
+      currentPage: page
     })
   } catch (error) {
     res.status(500).json({

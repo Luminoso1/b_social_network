@@ -9,7 +9,8 @@ import {
   getAllPost,
   save,
   showMedia,
-  userPosts
+  userPosts,
+  userPostsByNick
 } from '../controllers/post.js'
 import { defineStorage } from '../utils/multer-upload.js'
 
@@ -31,7 +32,9 @@ router.get('/posts/:id', validateAuthCookie, getPost)
 
 router.delete('/post/:id', validateAuthCookie, deletePost)
 
-router.get('/user/:id/posts', validateAuthCookie, userPosts)
+// router.get('/user/:id/posts', validateAuthCookie, userPosts)
+
+router.get('/user/:nick/posts', validateAuthCookie, userPostsByNick)
 
 router.get('/post/media/:file', validateAuthCookie, showMedia)
 
