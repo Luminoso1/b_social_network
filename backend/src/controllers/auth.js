@@ -119,10 +119,16 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    res.clearCookie('session').json({
-      status: 'success',
-      message: 'logout succesfull'
-    })
+    res
+      .clearCookie('session', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict'
+      })
+      .json({
+        status: 'success',
+        message: 'logout succesfull'
+      })
   } catch (error) {
     console.log('Error cleaning session')
     res.status(500).json({ status: 'error', message: 'Error cleaning session' })
