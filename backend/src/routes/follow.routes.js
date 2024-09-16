@@ -1,6 +1,13 @@
 import { Router } from 'express'
 import { validateAuthCookie } from '../middlewares/auth.js'
-import { follow, followers, following, unfollow } from '../controllers/follow.js'
+import {
+  follow,
+  followers,
+  followersByNick,
+  following,
+  followingByNick,
+  unfollow
+} from '../controllers/follow.js'
 
 const router = Router()
 
@@ -8,9 +15,13 @@ router.post('/follow', validateAuthCookie, follow)
 
 router.delete('/unfollow/:user_id', validateAuthCookie, unfollow)
 
-router.get('/following', validateAuthCookie, following)
+router.get('/users/:id/following', validateAuthCookie, following)
 
-router.get('/followers', validateAuthCookie, followers)
+router.get('/users/:id/followers', validateAuthCookie, followers)
+
+router.get('/user/:nick/followers', validateAuthCookie, followersByNick)
+
+router.get('/user/:nick/following', validateAuthCookie, followingByNick)
 
 export default router
 

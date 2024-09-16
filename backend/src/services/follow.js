@@ -1,4 +1,5 @@
 import Follow from '../models/follow.js'
+import Post from '../models/post.js'
 
 export const followThisUser = async (followingId, profileId) => {
   try {
@@ -26,9 +27,11 @@ export const getFollowCount = async (id) => {
   try {
     const following = await Follow.countDocuments({ following_user: id })
     const followers = await Follow.countDocuments({ followed_user: id })
+    const posts = await Post.countDocuments({ user_id: id })
     return {
       following,
-      followers
+      followers,
+      posts
     }
   } catch (error) {
     throw new Error('Error count', error)
