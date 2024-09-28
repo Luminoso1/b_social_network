@@ -6,7 +6,6 @@ import { getFullPathImage } from '../utils/index.js'
 export const follow = async (req, res) => {
   const { id } = req.body
   const userToFollow = id
-
   const { user } = req.session
 
   try {

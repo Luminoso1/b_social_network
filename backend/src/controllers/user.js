@@ -83,6 +83,7 @@ export const getUser = async (req, res) => {
 export const getUserByNick = async (req, res) => {
   try {
     const { nick } = req.params
+    const { user } = req.session
 
     const profile = await User.findOne({ nick })
       .select('name last_name nick image bio created_at')
@@ -95,12 +96,21 @@ export const getUserByNick = async (req, res) => {
     const fullImageUrl = getFullPathImage(req, profile.image)
     profile.image = fullImageUrl
 
-    const count = await getFollowCount(profile._id)
+    if (user.id !== profile._id) {
+      const followInfo = await followThisUser(profile._id, user.id)
+      const count = await getFollowCount(profile._id)
+
+      return res.status(200).json({
+        status: 'succes',
+        profile,
+        followInfo,
+        count
+      })
+    }
 
     return res.status(200).json({
       status: 'succes',
-      profile,
-      count
+      profile
     })
   } catch (error) {
     console.log(error)

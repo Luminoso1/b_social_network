@@ -18,7 +18,7 @@ router.get('/user/:nick', validateAuthCookie, getUserByNick)
 
 router.get('/users', validateAuthCookie, userListWithoutDep)
 
-router.get('/users/:id', validateAuthCookie, getUser)
+// router.get('/users/:id', validateAuthCookie, getUser)
 
 router.put('/user/update', validateAuthCookie, validate({ body: userUpdateSchema }), updateUser)
 
